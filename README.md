@@ -1,0 +1,1 @@
+# MINOR---Uitlezing-analoge-meters-mbt-TinyML
