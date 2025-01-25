@@ -20,8 +20,6 @@ def sorted_directory_listing(directory):
     return sorted_items
 
 
-
-
 def image_reading(filepath):
     """
     Reads an image from the given file path in grayscale mode.
@@ -34,7 +32,6 @@ def image_reading(filepath):
     """
     image = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
     return image
-
 
 
 def apply_convolution(image, filter: str):
