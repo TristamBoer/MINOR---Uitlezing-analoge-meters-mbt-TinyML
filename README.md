@@ -1,1 +1,1 @@
-# MINOR---Uitlezing-analoge-meters-mbt-TinyML
+# Reading analoge meters with TinyML
