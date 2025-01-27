@@ -1,1 +1,1 @@
-# Reading analoge meters with TinyML
+# Reading analog meters with TinyML
