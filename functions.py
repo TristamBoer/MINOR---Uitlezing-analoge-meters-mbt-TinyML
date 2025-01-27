@@ -1,12 +1,21 @@
 import numpy as np
 import cv2
 import os
-import tensorflow as tf
 import struct
+
+import tensforflow as tf # type: ignore
+from tensorflow.keras.models import Sequential  # type: ignore
+from tensorflow.keras.layers import InputLayer, Conv2D,AveragePooling2D,MaxPooling2D # type: ignore
+from tensorflow.keras.layers import BatchNormalization, Flatten, Dense, Dropout, Softmax # type: ignore
+from tensorflow.keras.losses import SparseCategoricalCrossentropy # type: ignore
+from tensorflow.keras.callbacks import ModelCheckpoint # type: ignore
+from tensorflow.keras.models import load_model # type: ignore
+
 
 def sorted_directory_listing(directory):
     """
-    Returns a sorted list of filenames from the specified directory.
+    Returns a sorted list of filenames from the specified directory. 
+    Since the order of files returned by os.listdir() is not guaranteed, this function ensures that the filenames are sorted.
 
     Parameters:
     directory (str): The path to the directory to list files from.
@@ -21,7 +30,9 @@ def sorted_directory_listing(directory):
 
 def image_reading(filepath):
     """
-    Reads an image from the given file path in grayscale mode.
+    Reads an image from the given file path in grayscale mode. 
+    The is image is in grayscale, because there is no need for color information.
+    Since the only thing we want to look for is the diffenrence in the contrast of the numbers in the image.
 
     Parameters:
     filepath (str): The path to the image file.
@@ -36,6 +47,11 @@ def image_reading(filepath):
 def apply_convolution(image, filter: str):
     """
     Applies a convolution filter to an image using a predefined kernel.
+    The different convolutions are used for different purposes. 
+    The "box" convolution is used to enhance edges used to detect the contours of the analoge meter.
+    While the "numbers" convolution is used to enhance the definition of the numbers in the analoge meter.
+    The kernels were defined by trial and error to get the best results.
+
 
     Parameters:
     image (numpy.ndarray): The input image to be processed.
@@ -46,12 +62,16 @@ def apply_convolution(image, filter: str):
     Returns:
     numpy.ndarray: The processed image with the applied convolution and inversion.
     """
+
+    if filter not in ['box', 'numbers']:
+        raise ValueError("Invalid filter type. Choose 'box' or 'numbers'.")
+
     if filter == 'box':
         kernel = np.array([[0, 1, 2],
                            [1, -4, 1],
                            [2, 1, 0]])
         
-        edges_x = convolved_image = cv2.filter2D(image, -1, kernel)
+        edges_x = cv2.filter2D(image, -1, kernel)
         inverted_image = 255 - edges_x
         return inverted_image
 
@@ -65,10 +85,13 @@ def apply_convolution(image, filter: str):
         return inverted_image
 
 
-def slice_rotate_image(image, height: float, length: float, delta_height: float, delta_length: float, digit_width: float):
+def slice_rotate_image(image, height:float, length:float, delta_height:float, delta_length:float, digit_width:float):
     """
-    Processes an image by applying convolution, detecting contours, rotating to correct orientation, 
-    and slicing the image into six digit segments.
+    Processes an image by applying convolution, detecting contours, rotating to correct orientation, and slicing the image into six digit segments.
+    The function first applies the "box" convolution to make it easier to detect the contours of the analoge meter.
+    Then it rotates the image to the correct orientation, by detecting the contours of the analoge meter.
+    To ensure that the image is rotated correctly, the function checks if the rotation was successful.
+    After that it applies the "numbers" convolution to enhance the definition of the numbers in the analoge meter. 
 
     Parameters:
     image (numpy.ndarray): Input grayscale image containing digits.
@@ -82,11 +105,11 @@ def slice_rotate_image(image, height: float, length: float, delta_height: float,
     list of numpy.ndarray: A list containing six extracted and resized digit images.
     """
 
-    pre_rotated_image = apply_convolution(image=image, filter='box')  # Image processed to detect rotation
-
-    def find_coordinates(image, reduce: bool = False):
+    def find_coordinates(image, reduce:bool=False):
         """
         Finds the bounding box of the largest contour in the image.
+        By finding the threshold of the image, the function can detect the contours of the analoge meter.
+        The function then finds the largest contour in the image and returns the bounding box of the contour.
 
         Parameters:
         image (numpy.ndarray): Input preprocessed image.
@@ -107,9 +130,11 @@ def slice_rotate_image(image, height: float, length: float, delta_height: float,
             x, y, w, h = cv2.boundingRect(largest_contour)
             return x, y, w, h
 
-    def rotate(angle, image):
+
+    def rotate(angle:float, image):
         """
         Rotates an image by a given angle.
+        The function rotates the image by the given angle using the center of the image as the pivot point.
 
         Parameters:
         angle (float): The angle in degrees to rotate the image.
@@ -122,6 +147,8 @@ def slice_rotate_image(image, height: float, length: float, delta_height: float,
         rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1)
         rotated_image = cv2.warpAffine(image, rotation_matrix, (image.shape[1], image.shape[0]))
         return rotated_image
+    
+    pre_rotated_image = apply_convolution(image=image, filter='box')  # Image processed to detect rotation
 
     w, h = find_coordinates(image=pre_rotated_image, reduce=True)
 
@@ -137,7 +164,7 @@ def slice_rotate_image(image, height: float, length: float, delta_height: float,
     # Validate rotation and correct if necessary
     angle2 = np.arctan(h2 / w2) - np.arctan(height / length)
     angle2 = np.rad2deg(angle2)
-    if round(angle2) >= 4.5:
+    if round(angle2) >= 4.5: # The maximum angle of 4.5 degrees allows for a slight rotation in the image.
         angle = -angle
         rotated_image = rotate(angle=angle, image=image)
 
@@ -174,6 +201,8 @@ def slice_rotate_image(image, height: float, length: float, delta_height: float,
     return [digit_1, digit_2, digit_3, digit_4, digit_5, digit_6]
 
 
+# This function is written by ChatGPT, because of the limited amount of time we had to work on the project.
+# To ensure further progression with the project, this was a band-aid fix to allow the project to go further.
 def hexdecimal_to_picture_array(HEXADECIMAL_BYTES):
     """
     Converts a list of hexadecimal byte values representing pixel data into a QCIF resolution (144x176) RGB image array.
