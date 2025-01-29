@@ -40,7 +40,46 @@ conda install -c conda-forge numpy
 ```
 
 2) Cv2
+```sh
+python -m pip install opencv-python
+```
+
+```sh
+conda install -c conda-forge opencv
+```
+
 3) Tensorflow
+  ```sh
+python -m pip install tensorflow
+```
+
+```sh
+conda install -c conda-forge tensorflow
+```
+
 4) Requests
+  ```sh
+python -m pip install requests
+```
+
+```sh
+conda install -c conda-forge requests
+```
+
 5) fast_api
+  ```sh
+python -m pip install fastapi
+```
+
+```sh
+conda install -c conda-forge fastapi
+```
+
 6) pydantic
+```sh
+python -m pip install pydantic
+```
+
+```sh
+conda install -c conda-forge pydantic
+```
