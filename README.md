@@ -28,4 +28,19 @@ This contains the calling of the local api.
 It isn't fully developed, due to the restraints of the Arduino.
 
 ## Requirements
+In all of the previous files, there are multiple packages that are not pre-installed.
+These are the following packages that need to be installed:
+1) Numpy:
+```sh
+python -m pip install numpy
+```
 
+```sh
+conda install -c conda-forge numpy
+```
+
+2) Cv2
+3) Tensorflow
+4) Requests
+5) fast_api
+6) pydantic
